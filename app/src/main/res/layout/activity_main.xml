@@ -10,6 +10,7 @@
         android:id="@+id/searchView"
         android:layout_width="match_parent"
         android:inputType="textCapWords"
+        android:queryHint="Введите город"
         android:layout_height="wrap_content" >
     </SearchView>
 
