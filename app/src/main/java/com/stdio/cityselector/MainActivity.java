@@ -4,8 +4,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.SearchView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -23,52 +33,44 @@ import java.util.HashMap;
 public class MainActivity extends AppCompatActivity {
 
     HashMap<Character, ArrayList<String>> map = new HashMap<Character, ArrayList<String>>();
-    private RecyclerView rv;
-    private SearchView searchView;
+    AutoCompleteTextView mAutoCompleteTextView;
+    AutoCompleteAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getCities();
-        initRecyclerView();
-        searchView = findViewById(R.id.searchView);
-        searchView.setIconified(false);
-        setOnQueryTextListener();
         char firstChar = 'а';
         for (int i = 0; i < 33; i++) {
             map.put((char)(firstChar+i), new ArrayList<String>());
         }
-    }
 
-    private void setOnQueryTextListener() {
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
+        mAutoCompleteTextView = findViewById(R.id.autoCompleteTextView);
+        mAutoCompleteTextView.addTextChangedListener(new TextWatcher() {
             @Override
-            public boolean onQueryTextSubmit(String s) {
-                return false;
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
             }
 
             @Override
-            public boolean onQueryTextChange(String s) {
-                if (s.isEmpty()) {
-                    setAdapter(new ArrayList<String>());
-                } else if (map.containsKey(s.toLowerCase().charAt(0))) {
-                    setAdapter(getFilteredList(s.toLowerCase()));
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                int resource = android.R.layout.simple_dropdown_item_1line;
+                Context context = MainActivity.this;
+                if (charSequence.toString().isEmpty()) {
+                    adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, new ArrayList<String>());
+                } else {
+                    ArrayList<String> cities = map.get(charSequence.toString().toLowerCase().charAt(0));
+                    adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, cities);
                 }
-                return false;
+                mAutoCompleteTextView.setAdapter(adapter);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
             }
         });
-    }
-
-    private ArrayList<String> getFilteredList(String query) {
-        ArrayList<String> filteredList = new ArrayList<>();
-        ArrayList<String> cities = map.get(query.toLowerCase().charAt(0));
-        for (String s : cities) {
-            if (s.toLowerCase().contains(query)) {
-                filteredList.add(s);
-            }
-        }
-        return filteredList;
     }
 
     private void getCities() {
@@ -113,17 +115,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         queue.add(stringRequest);
-    }
-
-    private void initRecyclerView() {
-        rv = findViewById(R.id.rv);
-        LinearLayoutManager llm = new LinearLayoutManager(this);
-        rv.setLayoutManager(llm);
-    }
-
-
-    private void setAdapter(ArrayList<String> dataList) {
-        RVAdapter adapter = new RVAdapter(dataList, this);
-        rv.setAdapter(adapter);
     }
 }
