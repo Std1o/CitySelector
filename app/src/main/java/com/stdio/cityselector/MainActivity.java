@@ -58,10 +58,10 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                int resource = android.R.layout.simple_dropdown_item_1line;
+                Context context = MainActivity.this;
                 if (countries.containsKey(tvCountry.getText().toString())) {
                     country_id = countries.get(tvCountry.getText().toString());
-                    int resource = android.R.layout.simple_dropdown_item_1line;
-                    Context context = MainActivity.this;
                     if (charSequence.toString().isEmpty()) {
                         adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, new ArrayList<String>());
                         mAutoCompleteTextView.setAdapter(adapter);
@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
                         getCities(charSequence.toString());
                     }
                 } else {
+                    adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, new ArrayList<String>());
+                    mAutoCompleteTextView.setAdapter(adapter);
                     mAutoCompleteTextView.setError("Указанная страна не найдена");
                 }
             }
