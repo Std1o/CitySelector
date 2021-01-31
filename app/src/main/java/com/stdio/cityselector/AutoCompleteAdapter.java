@@ -14,6 +14,7 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
 
     private ArrayList<String> fullList;
     private ArrayList<String> mOriginalValues;
+    private static ArrayList<String> filteredList;
     private ArrayFilter mFilter;
 
     public AutoCompleteAdapter(Context context, int resource, int textViewResourceId, List<String> objects) {
@@ -45,6 +46,10 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
             mFilter = new ArrayFilter();
         }
         return mFilter;
+    }
+
+    public ArrayList<String> getFilteredList() {
+        return filteredList;
     }
 
 
@@ -83,6 +88,7 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
 
                 }
 
+                filteredList = newValues;
                 results.values = newValues;
                 results.count = newValues.size();
             }

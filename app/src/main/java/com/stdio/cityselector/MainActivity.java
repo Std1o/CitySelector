@@ -26,28 +26,60 @@ import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    HashMap<Character, ArrayList<String>> map = new HashMap<Character, ArrayList<String>>();
+    HashMap<String, Integer> countries = new HashMap<>();
+    private ArrayList<String> countriesList = new ArrayList<>();
     AutoCompleteTextView mAutoCompleteTextView;
+    AutoCompleteTextView tvCountry;
     AutoCompleteAdapter adapter;
+    int country_id = 1;
+    private final String access_token = "8b53cb558b53cb558b53cb55a38b25ff5888b538b53cb55eb4505f5df55f0c2ce7d60b4";
+    private final String URL_FOR_COUNTRIES = "https://api.vk.com/method/database.getCountries?count=1000&lang=ru&need_all=1&v=5.126&&access_token=" + access_token;
+    private final String URL_FOR_CITIES = "https://api.vk.com/method/database.getCities?count=1000&lang=ru&need_all=1&v=5.126&access_token=" + access_token;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getCities();
-        char firstChar = 'а';
-        for (int i = 0; i < 33; i++) {
-            map.put((char)(firstChar+i), new ArrayList<String>());
-        }
-
+        getCountries();
         mAutoCompleteTextView = findViewById(R.id.autoCompleteTextView);
+        tvCountry = findViewById(R.id.tvCountry);
         mAutoCompleteTextView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (countries.containsKey(tvCountry.getText().toString())) {
+                    country_id = countries.get(tvCountry.getText().toString());
+                    int resource = android.R.layout.simple_dropdown_item_1line;
+                    Context context = MainActivity.this;
+                    if (charSequence.toString().isEmpty()) {
+                        adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, new ArrayList<String>());
+                        mAutoCompleteTextView.setAdapter(adapter);
+                    } else {
+                        getCities(charSequence.toString());
+                    }
+                } else {
+                    mAutoCompleteTextView.setError("Указанная страна не найдена");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+        tvCountry.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
@@ -60,10 +92,9 @@ public class MainActivity extends AppCompatActivity {
                 if (charSequence.toString().isEmpty()) {
                     adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, new ArrayList<String>());
                 } else {
-                    ArrayList<String> cities = map.get(charSequence.toString().toLowerCase().charAt(0));
-                    adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, cities);
+                    adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, countriesList);
                 }
-                mAutoCompleteTextView.setAdapter(adapter);
+                tvCountry.setAdapter(adapter);
             }
 
             @Override
@@ -73,37 +104,60 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void getCities() {
+    private void getCountries() {
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="https://api.hh.ru/areas";
+        String url = URL_FOR_COUNTRIES;
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        JSONArray array;
+                        JSONArray jsonArray;
 
                         try {
-                            array = new JSONArray(response);
-                            for (int i = 0; i < array.length(); i++) {
-                                JSONArray areas = array.getJSONObject(i).getJSONArray("areas");
-                                for (int j = 0; j < areas.length(); j++) {
-                                    String areaName = areas.getJSONObject(j).getString("name");
-                                    if (!areaName.contains(" ")) {
-                                        ArrayList<String> moscowList = map.get(areaName.toLowerCase().charAt(0));
-                                        moscowList.add(areaName);
-                                        map.put(areaName.toLowerCase().charAt(0), moscowList);
-                                    }
-                                    JSONArray cities = areas.getJSONObject(j).getJSONArray("areas");
-                                    for (int k = 0; k < cities.length(); k++) {
-                                        String name = cities.getJSONObject(k).getString("name");
-                                        ArrayList<String> citiesList = map.get(name.toLowerCase().charAt(0));
-                                        if (citiesList != null) {
-                                            citiesList.add(name);
-                                            map.put(name.toLowerCase().charAt(0), citiesList);
-                                        }
-                                    }
+                            jsonArray = new JSONObject(response).getJSONObject("response").getJSONArray("items");
+                            for (int i = 0; i < jsonArray.length(); i++) {
+                                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                countriesList.add(jsonObject.getString("title"));
+                                countries.put(jsonObject.getString("title"), jsonObject.getInt("id"));
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        });
+        queue.add(stringRequest);
+    }
+
+    private void getCities(String query) {
+        ArrayList<String> cities = new ArrayList<>();
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url = URL_FOR_CITIES + "&q=" + query+"&country_id=" + country_id;
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        JSONArray jsonArray;
+                        try {
+                            jsonArray = new JSONObject(response).getJSONObject("response").getJSONArray("items");
+                            for (int i = 0; i < jsonArray.length(); i++) {
+                                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                String city = jsonObject.getString("title");
+                                if (jsonObject.has("region")) {
+                                    city += ", " + jsonObject.getString("region");
+                                }
+                                if (!cities.contains(city)) {
+                                    cities.add(city);
                                 }
                             }
+                            int resource = android.R.layout.simple_dropdown_item_1line;
+                            Context context = MainActivity.this;
+                            adapter = new AutoCompleteAdapter(context, resource, android.R.id.text1, cities);
+                            mAutoCompleteTextView.setAdapter(adapter);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
