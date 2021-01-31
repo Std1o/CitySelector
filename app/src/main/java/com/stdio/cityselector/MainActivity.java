@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
         getCities();
         initRecyclerView();
         searchView = findViewById(R.id.searchView);
+        searchView.setIconified(false);
         setOnQueryTextListener();
         char firstChar = 'а';
         for (int i = 0; i < 33; i++) {
@@ -49,7 +50,11 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String s) {
-                setAdapter(getFilteredList(s.toLowerCase()));
+                if (s.isEmpty()) {
+                    setAdapter(new ArrayList<String>());
+                } else if (map.containsKey(s.toLowerCase().charAt(0))) {
+                    setAdapter(getFilteredList(s.toLowerCase()));
+                }
                 return false;
             }
         });
@@ -57,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<String> getFilteredList(String query) {
         ArrayList<String> filteredList = new ArrayList<>();
-        if (query.isEmpty()) return filteredList;
         ArrayList<String> cities = map.get(query.toLowerCase().charAt(0));
         for (String s : cities) {
             if (s.toLowerCase().contains(query)) {

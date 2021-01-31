@@ -13,10 +13,17 @@
         android:layout_height="wrap_content" >
     </SearchView>
 
+    <View
+        android:id="@+id/divider2"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/searchView"
+        android:background="?android:attr/listDivider" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/searchView"
+        android:layout_below="@+id/divider2"
         android:id="@+id/rv"/>
 
 </RelativeLayout>
